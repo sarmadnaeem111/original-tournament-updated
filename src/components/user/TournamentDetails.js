@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { sanitizeInput } from '../../utils/security';
+import TournamentStatusService from '../../services/TournamentStatusService';
 
 function TournamentDetails() {
   const [tournament, setTournament] = useState(null);
@@ -16,7 +17,20 @@ function TournamentDetails() {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    fetchTournamentDetails();
+    // Migrate any existing live tournaments to have statusUpdatedAt field
+    TournamentStatusService.migrateLiveTournaments()
+      .then(result => {
+        if (result.migratedCount > 0) {
+          console.log(`Migrated ${result.migratedCount} live tournaments`);
+        }
+      })
+      .catch(error => {
+        console.error('Error migrating live tournaments:', error);
+      })
+      .finally(() => {
+        // Fetch tournament details after migration attempt
+        fetchTournamentDetails();
+      });
   }, [tournamentId]);
 
   async function fetchTournamentDetails() {
