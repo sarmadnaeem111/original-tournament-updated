@@ -39,7 +39,20 @@ function TournamentManagement() {
 
   // Fetch tournaments when component mounts and initialize Cloudinary
   useEffect(() => {
-    fetchTournaments();
+    // Migrate any existing live tournaments to have statusUpdatedAt field
+    TournamentStatusService.migrateLiveTournaments()
+      .then(result => {
+        if (result.migratedCount > 0) {
+          console.log(`Migrated ${result.migratedCount} live tournaments`);
+        }
+      })
+      .catch(error => {
+        console.error('Error migrating live tournaments:', error);
+      })
+      .finally(() => {
+        // Fetch tournaments after migration attempt
+        fetchTournaments();
+      });
     
     // Initialize Cloudinary when component mounts with multiple retries
     const initCloudinaryWithRetries = (maxRetries = 5, delay = 1500) => {
