@@ -11,8 +11,12 @@ function TournamentManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentTournamentId, setCurrentTournamentId] = useState(null);
+  const [selectedTournament, setSelectedTournament] = useState(null);
+  const [uploadError, setUploadError] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -30,9 +34,7 @@ function TournamentManagement() {
   });
   
   // Modal state for result image upload
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [selectedTournament, setSelectedTournament] = useState(null);
-  const [uploadError, setUploadError] = useState('');
+
   const [activeWidget, setActiveWidget] = useState(null);
 
   // Fetch tournaments when component mounts and initialize Cloudinary
@@ -201,6 +203,60 @@ function TournamentManagement() {
     setUploadError('');
     setShowResultModal(true);
   }
+  
+  function openParticipantsModal(tournament) {
+    setSelectedTournament(tournament);
+    setShowParticipantsModal(true);
+    
+    // Log access for security auditing
+    const adminUser = JSON.parse(localStorage.getItem('user'));
+    const adminEmail = adminUser ? adminUser.email : 'unknown';
+    const timestamp = new Date().toISOString();
+    const logData = {
+      action: 'view_participants',
+      adminEmail: adminEmail,
+      tournamentId: tournament.id,
+      tournamentName: tournament.gameName,
+      timestamp: timestamp
+    };
+    
+    // Add log to Firestore
+    try {
+      addDoc(collection(db, 'admin_logs'), logData);
+      console.log('Admin access logged successfully');
+    } catch (error) {
+      console.error('Error logging admin access:', error);
+    }
+  }
+  
+  function downloadParticipantsCSV() {
+    if (!selectedTournament || !selectedTournament.participants || selectedTournament.participants.length === 0) {
+      return;
+    }
+    
+    // Create CSV content
+    const headers = ['No.', 'Email', 'Game Username', 'Joined At'];
+    const csvContent = [
+      headers.join(','),
+      ...selectedTournament.participants.map((participant, index) => {
+        const email = participant.email || 'N/A';
+        const username = participant.username || 'N/A';
+        const joinedAt = new Date(participant.joinedAt).toLocaleString();
+        return [index + 1, `"${email}"`, `"${username}"`, `"${joinedAt}"`].join(',');
+      })
+    ].join('\n');
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${selectedTournament.gameName}_participants.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -347,15 +403,23 @@ function TournamentManagement() {
                     <Button 
                       variant="primary" 
                       size="sm" 
-                      className="me-2"
+                      className="me-2 mb-1"
                       onClick={() => openEditModal(tournament)}
                     >
                       Edit
                     </Button>
                     <Button 
-                      variant="success" 
+                      variant="info" 
                       size="sm" 
-                      className="me-2"
+                      className="me-2 mb-1"
+                      onClick={() => openParticipantsModal(tournament)}
+                    >
+                      View Participants
+                    </Button>
+                    <Button 
+                      variant="warning" 
+                      size="sm" 
+                      className="me-2 mb-1"
                       onClick={() => openResultUploadModal(tournament)}
                     >
                       Upload Result
@@ -792,6 +856,59 @@ function TournamentManagement() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowResultModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Participants Modal */}
+      <Modal show={showParticipantsModal} onHide={() => setShowParticipantsModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {selectedTournament ? `Participants - ${selectedTournament.gameName}` : 'Participants'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedTournament && selectedTournament.participants && selectedTournament.participants.length > 0 ? (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Email</th>
+                  <th>Game Username</th>
+                  <th>Joined At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedTournament.participants.map((participant, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td>{DOMPurify.sanitize(participant.email)}</td>
+                    <td>
+                      {participant.username ? (
+                        <span className="badge bg-info text-dark">
+                          {DOMPurify.sanitize(participant.username)}
+                        </span>
+                      ) : (
+                        <span className="text-muted">Not provided</span>
+                      )}
+                    </td>
+                    <td>{new Date(participant.joinedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <p className="text-center">No participants found for this tournament.</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {selectedTournament && selectedTournament.participants && selectedTournament.participants.length > 0 && (
+            <Button variant="success" onClick={downloadParticipantsCSV}>
+              Download CSV
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => setShowParticipantsModal(false)}>
             Close
           </Button>
         </Modal.Footer>
