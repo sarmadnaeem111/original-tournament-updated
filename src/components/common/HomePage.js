@@ -156,7 +156,7 @@ function HomePage() {
         {/* How It Works */}
         <h2 className="gaming-section-title">How It Works</h2>
         <Row className="mb-5">
-          <Col md={4} className="mb-4">
+          <Col md={3} className="mb-4">
             <Card className="gaming-step-card h-100 text-center">
               <Card.Body>
                 <div className="gaming-step-number">
@@ -169,11 +169,24 @@ function HomePage() {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4} className="mb-4">
+          <Col md={3} className="mb-4">
             <Card className="gaming-step-card h-100 text-center">
               <Card.Body>
                 <div className="gaming-step-number">
                   <span>2</span>
+                </div>
+                <Card.Title>Recharge Wallet</Card.Title>
+                <Card.Text>
+                  Add funds to your wallet from your profile using secure payment methods. Your transactions are protected with encryption.
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3} className="mb-4">
+            <Card className="gaming-step-card h-100 text-center">
+              <Card.Body>
+                <div className="gaming-step-number">
+                  <span>3</span>
                 </div>
                 <Card.Title>Join Tournaments</Card.Title>
                 <Card.Text>
@@ -182,11 +195,11 @@ function HomePage() {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4} className="mb-4">
+          <Col md={3} className="mb-4">
             <Card className="gaming-step-card h-100 text-center">
               <Card.Body>
                 <div className="gaming-step-number">
-                  <span>3</span>
+                  <span>4</span>
                 </div>
                 <Card.Title>Compete & Win</Card.Title>
                 <Card.Text>
