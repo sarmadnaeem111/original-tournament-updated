@@ -22,7 +22,21 @@ function TournamentList() {
 
   // Fetch tournaments and user data on component mount
   useEffect(() => {
-    fetchTournaments();
+    // Migrate any existing live tournaments to have statusUpdatedAt field
+    TournamentStatusService.migrateLiveTournaments()
+      .then(result => {
+        if (result.migratedCount > 0) {
+          console.log(`Migrated ${result.migratedCount} live tournaments`);
+        }
+      })
+      .catch(error => {
+        console.error('Error migrating live tournaments:', error);
+      })
+      .finally(() => {
+        // Fetch tournaments after migration attempt
+        fetchTournaments();
+      });
+    
     if (currentUser) {
       fetchUserWalletBalance();
     }
