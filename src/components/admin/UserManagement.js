@@ -1,21 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Table, Button, Modal, Form, Alert } from 'react-bootstrap';
+import { Container, Table, Button, Modal, Form, Alert, InputGroup } from 'react-bootstrap';
 import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { sanitizeInput } from '../../utils/security';
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [walletAmount, setWalletAmount] = useState(0);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
+  
+  // Filter users when search query changes
+  useEffect(() => {
+    if (users.length > 0) {
+      filterUsers();
+    }
+  }, [searchQuery, users]);
 
   async function fetchUsers() {
     try {
@@ -27,11 +37,43 @@ function UserManagement() {
         ...doc.data()
       }));
       setUsers(usersList);
+      setFilteredUsers(usersList);
     } catch (error) {
       setError('Failed to fetch users: ' + error.message);
     } finally {
       setLoading(false);
     }
+  }
+  
+  function filterUsers() {
+    const query = sanitizeInput(searchQuery.toLowerCase().trim());
+    if (!query) {
+      setFilteredUsers(users);
+      return;
+    }
+    
+    const filtered = users.filter(user => {
+      // Search by email
+      if (user.email && user.email.toLowerCase().includes(query)) {
+        return true;
+      }
+      // Search by role
+      if (user.role && user.role.toLowerCase().includes(query)) {
+        return true;
+      }
+      // Search by wallet balance (as string)
+      const walletStr = String(user.walletBalance || 0);
+      if (walletStr.includes(query)) {
+        return true;
+      }
+      return false;
+    });
+    
+    setFilteredUsers(filtered);
+  }
+  
+  function handleSearchChange(e) {
+    setSearchQuery(e.target.value);
   }
 
   async function openWalletModal(userId) {
@@ -82,6 +124,25 @@ function UserManagement() {
       
       {error && <Alert variant="danger">{error}</Alert>}
       
+      <Form className="mb-4">
+        <InputGroup>
+          <Form.Control
+            placeholder="Search by email, role, or wallet balance"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            aria-label="Search users"
+          />
+          {searchQuery && (
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setSearchQuery('')}
+            >
+              Clear
+            </Button>
+          )}
+        </InputGroup>
+      </Form>
+      
       {loading ? (
         <p>Loading users...</p>
       ) : (
@@ -97,12 +158,14 @@ function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center">No users found</td>
+                <td colSpan="6" className="text-center">
+                  {searchQuery ? 'No users match your search' : 'No users found'}
+                </td>
               </tr>
             ) : (
-              users.map(user => (
+              filteredUsers.map(user => (
                 <tr key={user.id}>
                   <td>{user.email}</td>
                   <td>{user.role || 'user'}</td>
