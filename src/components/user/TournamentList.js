@@ -170,6 +170,9 @@ function TournamentList() {
     <Container className="py-4 px-3 px-md-4">
       <div className="tournaments-header">
         <h1>Tournaments</h1>
+        <div className="whatsapp-announcement">
+          Join on Whatsapp Channel for announcements: <a href="https://whatsapp.com/channel/0029VbBMC8f1t90YcV2HDY2t" target="_blank" rel="noopener noreferrer">https://whatsapp.com/channel/0029VbBMC8f1t90YcV2HDY2t</a>
+        </div>
         {currentUser && (
           <div className="text-start text-md-end wallet-balance">
             Wallet Balance: <span className="balance-amount">Rs. {walletBalance}</span>
