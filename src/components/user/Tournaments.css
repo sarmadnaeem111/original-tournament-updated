@@ -24,6 +24,24 @@
   display: inline-block;
 }
 
+.whatsapp-announcement {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  color: #d32b25;
+  font-weight: 500;
+}
+
+.whatsapp-announcement a {
+  color: #d32525;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.whatsapp-announcement a:hover {
+  color: #128C7E;
+}
+
 .wallet-balance {
   font-weight: 600;
   font-size: 1.1rem;
