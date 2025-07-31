@@ -90,6 +90,29 @@ service cloud.firestore {
       allow read: if settingId == 'paymentAccounts' || isAdmin();
     }
     
+    // Withdrawal Requests collection rules
+    match /withdrawalRequests/{requestId} {
+      // Users can read their own withdrawal requests
+      // Admins can read all withdrawal requests
+      allow read: if isCurrentUser(resource.data.userId) || isAdmin();
+      
+      // Users can create withdrawal requests with valid data and minimum amount of 100 Rs.
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid && 
+                     isValidString(request.resource.data.accountName) && 
+                     isValidString(request.resource.data.accountNumber) && 
+                     isValidString(request.resource.data.bankName) && 
+                     request.resource.data.amount is number && 
+                     request.resource.data.amount >= 100 && 
+                     request.resource.data.status == 'pending';
+      
+      // Only admins can update withdrawal requests (to approve/reject)
+      allow update: if isAdmin();
+      
+      // Only admins can delete withdrawal requests
+      allow delete: if isAdmin();
+    }
+    
     // Default deny
     match /{document=**} {
       allow read, write: if false;
