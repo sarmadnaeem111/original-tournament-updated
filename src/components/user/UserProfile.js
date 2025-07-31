@@ -225,14 +225,17 @@ function UserProfile() {
               <Form.Label className="small">Withdrawal Amount (Rs.)</Form.Label>
               <Form.Control 
                 type="number" 
-                placeholder="Enter amount to withdraw" 
+                placeholder="Enter amount to withdraw (min 100 Rs.)" 
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
-                min="1"
+                min="100"
                 max={userData?.walletBalance || 0}
                 required 
                 className="form-control-sm"
               />
+              <Form.Text className="text-muted small">
+                Minimum withdrawal amount is 100 Rs.
+              </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -243,7 +246,7 @@ function UserProfile() {
           <Button 
             variant="primary" 
             onClick={handleWithdrawRequest}
-            disabled={!withdrawAmount || withdrawAmount <= 0 || withdrawAmount > userData?.walletBalance || !accountName || !accountNumber || !bankName}
+            disabled={!withdrawAmount || withdrawAmount < 100 || withdrawAmount > userData?.walletBalance || !accountName || !accountNumber || !bankName}
             size="sm"
             className="px-3"
           >
@@ -274,6 +277,12 @@ function UserProfile() {
       // Validate inputs
       if (!withdrawAmount || withdrawAmount <= 0) {
         setError('Please enter a valid withdrawal amount');
+        return;
+      }
+      
+      // Validate minimum withdrawal amount
+      if (withdrawAmount < 100) {
+        setError('Minimum withdrawal amount is 100 Rs.');
         return;
       }
       
