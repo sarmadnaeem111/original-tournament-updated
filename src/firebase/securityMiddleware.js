@@ -136,6 +136,28 @@ export function validateFirestoreData(data, collectionName) {
       }
       break;
       
+    case 'withdrawalRequests':
+      // Withdrawal amount validation
+      if (data.amount === undefined || 
+          typeof data.amount !== 'number' || 
+          data.amount < 100) {
+        errors.push('Withdrawal amount must be at least 100 Rs.');
+      }
+      
+      // Account details validation
+      if (!data.accountName || typeof data.accountName !== 'string' || data.accountName.trim() === '') {
+        errors.push('Account name is required');
+      }
+      
+      if (!data.accountNumber || typeof data.accountNumber !== 'string' || data.accountNumber.trim() === '') {
+        errors.push('Account number is required');
+      }
+      
+      if (!data.bankName || typeof data.bankName !== 'string' || data.bankName.trim() === '') {
+        errors.push('Bank name is required');
+      }
+      break;
+      
     case 'tournaments':
       // Tournament name validation
       if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
